@@ -21,8 +21,9 @@ import java.util.Date;
  *
  */
 public class MyWebSocketHandler extends SimpleChannelInboundHandler<Object> {
-	
+	//用于处理webSocket消息
 	private WebSocketServerHandshaker handshaker;
+
 	private static final String WEB_SOCKET_URL = "ws://localhost:8888/websocket";
 	//客户端与服务端创建连接的时候调用
 	@Override
@@ -64,7 +65,7 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<Object> {
 	}
 	
 	/**
-	 * 处理客户端与服务端之前的websocket业务
+	 * 处理客户端与服务端之前的websocket业务(在完成HTTP协议与webSocket的协议转换之后)
 	 * @param ctx
 	 * @param frame
 	 */
@@ -88,6 +89,7 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<Object> {
 		//通过TextWebSocketFrame获取客户端向服务端发送的消息
 		String request = ((TextWebSocketFrame) frame).text();
 		System.out.println("服务端收到客户端的消息====>>>" + request);
+		//向客户端发送消息也要构造TextWebSocketFrame
 		TextWebSocketFrame tws = new TextWebSocketFrame(new Date().toString() + ctx.channel().id() + " ===>>> " + request);
 		ctx.writeAndFlush(tws);
 		//群发，服务端向每个连接上来的客户端群发消息
@@ -115,7 +117,7 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<Object> {
 		if (handshaker == null) {
 			WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
 		}else{
-			//将WebSocket相关的便捷码类动态添加到channelPipeline
+			//将WebSocket相关的编解码类动态添加到channelPipeline
 			handshaker.handshake(ctx.channel(), req);
 		}
 	}
@@ -126,8 +128,7 @@ public class MyWebSocketHandler extends SimpleChannelInboundHandler<Object> {
 	 * @param req
 	 * @param res
 	 */
-	private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req,
-			DefaultFullHttpResponse res){
+	private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, DefaultFullHttpResponse res){
 		if (res.status().code() != 200) {
 			ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
 			res.content().writeBytes(buf);
